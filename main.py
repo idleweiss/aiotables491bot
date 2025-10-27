@@ -14,6 +14,7 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Настройка логирования
+# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -212,6 +213,20 @@ def format_schedule(schedule, parity_russian):
     
     return result
 
+def get_current_week_dates():
+    """
+    Возвращает список дат на текущую неделю (понедельник - суббота)
+    """
+    today = datetime.now()
+    # Находим понедельник текущей недели
+    monday = today - timedelta(days=today.weekday())
+    
+    week_dates = []
+    for i in range(6):  # понедельник - суббота
+        week_dates.append(monday + timedelta(days=i))
+    
+    return week_dates
+
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     """
@@ -299,13 +314,17 @@ async def cmd_week_button(message: types.Message):
     week_parity = get_week_parity(current_date)
     parity_russian = "нечетная" if week_parity == "odd" else "четная"
     
+    # Получаем даты текущей недели
+    week_dates = get_current_week_dates()
+    
     response = f"📚 <b>Расписание на неделю ({parity_russian} неделя):</b>\n\n"
     
-    for day in range(6):  # с понедельника по субботу
-        day_schedule = get_schedule_for_day(day, week_parity)
-        day_name = get_russian_weekday(datetime(2024, 1, 1 + day))
+    for i, date in enumerate(week_dates):
+        day_schedule = get_schedule_for_day(i, week_parity)
+        day_name = get_russian_weekday(date)
+        formatted_day_date = format_date(date)
         
-        response += f"📆 <b>{day_name}:</b>\n"
+        response += f"📆 <b>{day_name} ({formatted_day_date}):</b>\n"
         
         if day_schedule:
             for lesson in day_schedule:
